@@ -1,0 +1,293 @@
+使用createRouter()创建路由对象。
+使用useRouter()引用创建的路由对象。
+使用useRoute()访问当前路由信息。
+
+router.push()可以传入hash参数。结果为/path#hash
+
+router-view可以声明name属性。默认为default。
+==>
+<router-view class="view left-sidebar" name="LeftSidebar"></router-view>
+<router-view class="view main-content"></router-view>
+<router-view class="view right-sidebar" name="RightSidebar"></router-view>
+  routes: [
+    {
+      path: '/',
+      components: {
+        default: Home,
+        // LeftSidebar: LeftSidebar 的缩写
+        LeftSidebar,
+        // 它们与 `<router-view>` 上的 `name` 属性匹配
+        RightSidebar,
+      },
+    },
+  ],
+
+重定向redirect的值可以为一个函数。
+ redirect: to => {
+      // 方法接收目标路由作为参数
+      // return 重定向的字符串路径/路径对象
+      return { path: '/search', query: { q: to.params.searchText } }
+    },
+
+const routes = [{ path: '/home', redirect: { name: 'homepage' } }]  //  home路由不会触发导航守卫，而homepage可以触发导航守卫。
+相对位置的重定向：重定向的路由不以/开头，会把最末级的以/开头的替换：
+  {
+    // 将总是把/users/123/posts重定向到/users/123/profile。
+    path: '/users/:id/posts',
+    redirect: to => {
+      // 该函数接收目标路由作为参数
+      // 相对位置不以`/`开头
+      // 或 { path: 'profile'}
+      return 'profile'
+    },
+  },
+非嵌套的重定向，可以不声明component。嵌套的重定向，外层需要声明component。
+
+别名可以是一个数组： alias: ['/:id', 'test'] 
+
+将路由的params自动传递到模板中：
+const User = {
+  // 请确保添加一个与路由参数完全相同的 prop 名
+  props: ['id'],
+  template: '<div>User {{ id }}</div>'
+}
+const routes = [{ path: '/user/:id', component: User, props: true }]  // 当 props 设置为 true 时，route.params 将被设置为组件的 props。
+对于有命名视图的路由，你必须为每个命名视图定义 props 配置：
+const routes = [
+  {
+    path: '/user/:id',
+    components: { default: User, sidebar: Sidebar },
+    props: { default: true, sidebar: false }
+  }
+]
+
+props的函数模式：
+const routes = [
+  {
+    path: '/search',
+    component: SearchUser,
+    props: route => ({ query: route.query.q })
+  }
+]
+
+导航守卫需要返回一个值。返回false时取消跳转。如果遇到了意料之外的情况，可能会抛出一个 Error。这会取消导航并且调用 router.onError() 注册过的回调。
+导航守卫参数函数可以是一个async 函数。
+
+router.beforeResolve和 router.beforeEach 类似，因为它在每次导航时都会触发，不同的是，解析守卫刚好会在导航被确认之前、所有组件内守卫和异步路由组件被解析之后调用。
+在导航钩子中的函数里可以使用inject()：
+const app = createApp(App)
+app.provide('global', 'hello injections')
+import {inject} from "vue";
+router.beforeEach((to, from) => {
+  const global = inject('global') // 使用inject函数，'hello injections' 
+})
+
+路由独享的守卫:
+const routes = [
+  {
+    path: '/users/:id',
+    component: UserDetails,
+    beforeEnter: (to, from) => {
+      // reject the navigation
+      return false
+    },
+  },
+]
+
+你也可以将一个函数数组传递给 beforeEnter，这在为不同的路由重用守卫时很有用：
+function removeQueryParams(to) {
+  if (Object.keys(to.query).length)
+    return { path: to.path, query: {}, hash: to.hash }
+}
+
+function removeHash(to) {
+  if (to.hash) return { path: to.path, query: to.query, hash: '' }
+}
+
+const routes = [
+  {
+    path: '/users/:id',
+    component: UserDetails,
+    beforeEnter: [removeQueryParams, removeHash],
+  },
+  {
+    path: '/about',
+    component: UserDetails,
+    beforeEnter: [removeQueryParams],
+  },
+]
+
+路由守卫只在进入路由时触发，不会在 params、query 或 hash 改变时触发
+
+
+组件内的 beforeRouteEnter导航守卫 是支持给 next 传递回调的唯一守卫：
+beforeRouteEnter (to, from, next) {
+  next(vm => {
+    // 通过 `vm` 访问组件实例
+  })
+}
+
+如果你正在使用组合 API 和 setup 函数来编写组件，你可以通过 onBeforeRouteUpdate 和 onBeforeRouteLeave 分别添加 update 和 leave 守卫。
+如果在但文件中需要使用beforeRouteEnter ，需要再写一个script，然后把beforeRouteEnter写在里面。
+
+useLink：不知道干啥的
+
+
+RouterView有一个默认插槽：v-slot="{ Component, route }" // route是当前匹配到的路由信息。
+
+动态设置meta：
+router.afterEach((to, from) => {
+  const toDepth = to.path.split('/').length
+  const fromDepth = from.path.split('/').length
+  to.meta.transition = toDepth < fromDepth ? 'slide-right' : 'slide-left'
+})
+
+异步路由：
+一个函数，返回一个promise
+不要在路由中使用异步组件。异步组件仍然可以在路由组件中使用，但路由组件本身就是动态导入的。、
+如果你使用的是 webpack 之类的打包器，它将自动从代码分割中受益。
+如果你使用的是 Babel，你将需要添加 syntax-dynamic-import 插件，才能使 Babel 正确地解析语法。
+
+
+把组件按组分块：
+webpack：
+const UserDetails = () =>
+  import(/* webpackChunkName: "group-user" */ './UserDetails.vue')
+const UserDashboard = () =>
+  import(/* webpackChunkName: "group-user" */ './UserDashboard.vue')
+const UserProfileEdit = () =>
+  import(/* webpackChunkName: "group-user" */ './UserProfileEdit.vue')
+vite：
+// vite.config.js
+export default defineConfig({
+  build: {
+    rollupOptions: {
+      // https://rollupjs.org/guide/en/#outputmanualchunks
+      output: {
+        manualChunks: {
+          'group-user': [
+            './src/UserDetails',
+            './src/UserDashboard',
+            './src/UserProfileEdit',
+          ],
+        },
+      },
+    },
+  },
+})
+
+
+router-link可以使用v-slot：
+<router-link    v-slot="{ isActive, href, navigate }“  >
+    <a
+      v-bind="$attrs"
+      :href="href"
+      @click="navigate"
+      :class="isActive ? activeClass : inactiveClass"
+    >
+      <slot />
+    </a>
+  </router-link>
+
+router-link的v-slot和useLink(props)类似：
+import { RouterLink, useLink } from 'vue-router'
+
+export default {
+  name: 'AppLink',
+  props: {
+    ...RouterLink.props,
+    inactiveClass: String,
+  },
+  setup(props) {
+    // `props` 包含 `to` 和任何其他可以传递给 <router-link> 的 prop
+    const { navigate, href, route, isActive, isExactActive } = useLink(props)
+    return { isExternalLink }
+  },
+}
+
+router.push()/router.replace()返回的是一个promise，使用场景：
+有一个移动手机菜单，它允许我们进入不同的页面，而我们只想在导航到新页面后隐藏菜单：
+await router.push('/my-profile')
+this.isMenuOpen = false // 一旦导航完成，菜单就会关闭，但如果导航被阻止，它也会关闭。
+
+
+如果导航被阻止，导致用户停留在同一个页面上，由 router.push 返回的 Promise 的解析值将是 Navigation Failure。否则，它将是一个 falsy 值(通常是 undefined)。这样我们就可以区分我们导航是否离开了当前位置：
+const navigationResult = await router.push('/my-profile')
+if (navigationResult) {
+  // 导航被阻止
+} else {
+  // 导航成功 (包括重新导航的情况)
+  this.isMenuOpen = false
+}
+Navigation Failure 是带有一些额外属性的 Error 实例，这些属性为我们提供了足够的信息，让我们知道哪些导航被阻止了以及为什么被阻止了。要检查导航结果的性质，请使用 isNavigationFailure 函数：
+import { NavigationFailureType, isNavigationFailure } from 'vue-router'
+
+// 试图离开未保存的编辑文本界面
+const failure = await router.push('/articles/2')
+if (isNavigationFailure(failure, NavigationFailureType.aborted)) {
+  // 给用户显示一个小通知
+  showToast('You have unsaved changes, discard and leave anyway?')
+}
+NavigationFailureType的枚举值：
+aborted：在导航守卫中返回 false 中断了本次导航。
+cancelled： 在当前导航完成之前又有了一个新的导航。比如，在等待导航守卫的过程中又调用了 router.push。
+duplicated：导航被阻止，因为我们已经在目标位置了。
+
+failure的字段：
+failure.to.path // '/admin'
+failure.from.path // '/'
+
+
+你可以用 router.afterEach() 导航守卫检测全局导航故障：
+router.afterEach((to, from, failure) => {
+  if (failure) {
+    sendToAnalytics(to, from, failure)
+  }
+})
+
+有一个以下路由：
+routes: [{ path: '/:articleName', component: Article }]
+输入路由地址：/about，会显示Article组件。
+如果我们在 /about 上添加一个新的路由：
+router.addRoute({ path: '/about', component: About })
+页面仍然会显示 Article 组件
+我们需要手动调用 router.replace()：
+router.replace(router.currentRoute.value.fullPath)
+
+在导航守卫中添加路由，不应该调用 router.replace()，而是通过返回新的位置来触发重定向：
+router.beforeEach(to => {
+  if (!hasNecessaryRoute(to)) {
+    router.addRoute(generateRoute(to))
+    // 触发重定向
+    return to.fullPath
+  }
+})
+
+删除路由：
+1、
+router.addRoute({ path: '/about', name: 'about', component: About })
+// 这将会删除之前已经添加的路由，因为他们具有相同的名字且名字必须是唯一的
+router.addRoute({ path: '/other', name: 'about', component: Other })
+2、
+const removeRoute = router.addRoute(routeRecord)
+3、
+removeRoute() // 删除路由如果存在的话
+router.addRoute({ path: '/about', name: 'about', component: About })
+// 删除路由
+router.removeRoute('about')
+
+添加嵌套路由：
+可以将路由的 name 作为第一个参数传递给 router.addRoute()：
+router.addRoute({ name: 'admin', path: '/admin', component: Admin })
+router.addRoute('admin', { path: 'settings', component: AdminSettings })
+这等效于
+router.addRoute({
+  name: 'admin',
+  path: '/admin',
+  component: Admin,
+  children: [{ path: 'settings', component: AdminSettings }],
+})
+
+查看现有路由：
+router.hasRoute()：检查路由是否存在。
+router.getRoutes()：获取一个包含所有路由记录的数组。
