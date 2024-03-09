@@ -1,11 +1,14 @@
+<script>
+import {defineComponent} from 'vue'
+console.log('11111111111111')
+const name = 'zhangsan'
+
+</script>
 <script setup>
-console.log('homeview start')
-const result = await new Promise(r=>setTimeout(()=>{
-  r('aaaaaa')
-},5000))
-console.log('homeview end')
+console.log('2222')
+console.log('name:',name)
 </script>
 
 <template>
-<div>111</div>
+  <button @click="say">jump</button>
 </template>

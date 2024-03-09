@@ -1,3 +1,9 @@
+在一个 Vue3 单文件组件 (SFC)中，<script setup> 和 <script> 它们各自最多只能存在一个
+<script setup> 这个脚本块将被预处理为组件的 setup() 函数，这意味着它将为每一个(也可以说每一次)组件实例都执行。
+<script> 只在组件被首次引入的时候执行一次，其它地方引入或再次实例化都不会再执行。
+vue会把script和script setup中的内容合并。
+
+
 setup() 自身并不含对组件实例的访问权，即在 setup() 中访问 this 会是 undefined
 <script setup> 中的顶层的导入、声明的变量和函数可在同一组件的模板中直接使用。你可以理解为模板是在同一作用域内声明的一个 JavaScript 函数——它自然可以访问与它一起声明的所有内容。
 ==>有点类似于返回了一个render()函数
