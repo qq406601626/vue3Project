@@ -314,3 +314,89 @@ toRefs 在调用时只会为源对象上可以枚举的属性创建 ref。如果
 
 Vue Router 使用动态导入对懒加载组件进行了内置支持。这些与异步组件不同，目前他们不会触发 <Suspense>。但是，它们仍然可以有异步组件作为后代，这些组件可以照常触发 <Suspense>。
 ==>也就是说，异步路由不会触发Suspense，但是如果异步路由的组件包含了async setup或者异步组件，那么依然会触发Suspense。
+
+
+useSlots() 和 useAttrs()​
+在 <script setup> 使用 slots 和 attrs 的情况应该是相对来说较为罕见的，因为可以在模板中直接通过 $slots 和 $attrs 来访问它们。在你的确需要使用它们的罕见场景中，可以分别用 useSlots 和 useAttrs 两个辅助函数：
+<script setup>
+import { useSlots, useAttrs } from 'vue'
+const slots = useSlots()
+const attrs = useAttrs()
+</script>
+useSlots 和 useAttrs 是真实的运行时函数，它的返回与 setupContext.slots 和 setupContext.attrs 等价。它们同样也能在普通的组合式 API 中使用。
+
+
+深度选择器：
+===><style scoped>
+       .a :deep(.b) {
+         /* ... */
+       }
+       </style>
+上面的代码会被编译成：
+       .a[data-v-f3f3eg9] .b {
+         /* ... */
+       }
+
+插槽选择器：
+默认情况下，作用域样式不会影响到 <slot/> 渲染出来的内容，因为它们被认为是父组件所持有并传递进来的。使用 :slotted 伪类以明确地将插槽内容作为选择器的目标：默认为父组件的样式，然后根据权重去判断样式。
+===><style scoped>
+       :slotted(div) {
+         color: red;
+       }
+       </style>
+
+全局选择器：
+<style scoped>
+===>:global(.red) {
+         color: red;
+       }
+</style>
+对于一个使用了 .a .b 选择器的样式规则来说，如果匹配到 .a 的元素包含了一个递归的子组件，那么所有的在那个子组件中的 .b 都会匹配到这条样式规则。
+
+
+一个 <style module> 标签会被编译为 CSS Modules 并且将生成的 CSS class 作为 $style 对象暴露给组件：
+===>
+         <template>
+           <p :class="$style.red">This should be red</p>
+         </template>
+         <style module>
+         .red {
+           color: red;
+         }
+         </style>
+你可以通过给 module attribute 一个值来自定义注入 class 对象的属性名：
+===>
+          <template>
+            <p :class="classes.red">red</p>
+          </template>
+
+          <style module="classes">
+          .red {
+            color: red;
+          }
+          </style>
+
+可以通过 useCssModule API 在 setup() 和 <script setup> 中访问注入的 class。对于使用了自定义注入名称的 <style module> 块，useCssModule 接收一个匹配的 module attribute 值作为第一个参数：
+===>
+          import { useCssModule } from 'vue'
+          // 在 setup() 作用域中...
+          // 默认情况下, 返回 <style module> 的 class
+          useCssModule()
+          // 具名情况下, 返回 <style module="classes"> 的 class
+          useCssModule('classes')
+
+CSS 中的 v-bind()：会随着变量的变化而更改样式
+===>
+          <script setup>
+          const theme = {
+            color: 'red'
+          }
+          </script>
+          <template>
+            <p>hello</p>
+          </template>
+          <style scoped>
+          p {
+            color: v-bind('theme.color');
+          }
+          </style>
