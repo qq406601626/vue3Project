@@ -1,3 +1,95 @@
+ref返回的是一个RefImpl类型，内层的非原始值将通过 reactive() 转换为响应式代理。ref.value返回的是一个proxy。
+reactive返回的是一个Proxy类型。
+reactive() 将深层地转换对象：当访问嵌套对象时，它们也会被 reactive() 包装。即访问reactive对象的属性时，会返回proxy。（并非时在声明时做的，而是在访问时做的proxy处理）
+当 ref 的值是一个对象时，ref() 也会在内部调用reactive：即声明一个ref({})，ref.value的值为reactive()的返回值。
+一个 ref 会在作为响应式对象的属性被访问或修改时自动解包：
+===>
+       const obj = ref({
+         nested: { count: 0 },
+           arr: ['foo', 'bar'],
+           user : ref('zhangsan')
+         })
+         console.log(obj.value.user) // zhangsan。不能写为obj.value.user.value，因为obj.value为proxy响应式对象，访问响应式对象的属性时RefImpl会自动解包。
+        // 如果只打印obj，user的值为RefImpl。
+
+在模板中解包的理解：
+===>
+         const count = ref(0)
+         const object = { id: ref(1) }
+         {{ count + 1 }} // 会自动解包：判断count变量是RefImpl，则解包。
+         {{ object.id + 1 }} // 不会自动解包。判断object变量不是RefImpl，不解包。
+
+
+
+watchEffect的第二个参数：
+flush: 'post' ，将会使侦听器延迟到组件渲染之后再执行，即在setup执行完了才执行。
+flush: 'sync'，修改watchEffect回调中的任何一个变量都会触发一次回调。如果不设置flush: 'sync'，则会在nexttick后调用一次回调。、
+onTrack(e) {
+    debugger
+  },
+onTrigger(e) {
+    debugger
+}
+watchEffect的回调函数有一个入参onCleanup函数，该函数需要传入一个函数作为参数。该函数在声明watchEffect时不会执行，只有当再出发出watchEffect时才会执行，并且是优先函数回调执行。
+watchEffect返回一个取消监听的函数。
+watchEffect中的异步函数中的变量不能触发监听。
+watchEffect 仅会在其同步执行期间，才追踪依赖。在使用异步回调时，只有在第一个 await 正常工作前访问到的属性才会被追踪。
+setTimeout中的watchEffect会执行，但是需要手动取消监听。watchEffect中的setTimeout不会执行。
+
+watch第一个参数：
+一个函数，返回一个值
+一个 ref
+一个响应式对象
+...或是由以上类型的值组成的数组，当侦听多个来源时，回调函数接受两个数组，分别对应来源数组中的新值和旧值。
+watch第二个参数为回调函数，这个回调函数接受三个参数：新值、旧值，以及一个用于注册副作用清理的回调函数
+watch第三个参数：
+第三个可选的参数是一个对象，支持以下这些选项：
+immediate：在侦听器创建时立即触发回调。第一次调用时旧值是 undefined。
+deep：如果源是对象，强制深度遍历，以便在深层级变更时触发回调。参考深层侦听器。
+flush：调整回调函数的刷新时机。参考回调的刷新时机及 watchEffect()。
+onTrack / onTrigger：调试侦听器的依赖。参考调试侦听器。
+once：回调函数只会运行一次。侦听器将在回调函数首次运行后自动停止
+
+当监听的第一个参数为回调函数时，会判断回调函数的返回值是否是绝对相等（即===）
+当监听的第一个参数为reactive时，默认为deep模式
+当第一个参数为ref时，只有当ref.value发生改变时才会触发监听，除非加上deep。
+
+
+​readonly():接受一个对象 (不论是响应式还是普通的) 或是一个 ref。只读代理是深层的：对任何嵌套属性的访问都将是只读的。它的 ref 解包行为与 reactive() 相同，但解包得到的值是只读的。
+readonly函数是递归的，也就是说，如果一个对象包含其他对象，那么这些对象也会被转换为只读对象
+
+unref:如果参数是 ref，则返回内部值，否则返回参数本身。这是 val = isRef(val) ? val.value : val 计算的一个语法糖
+
+toref:
+toRef(existingRef)：会原样返回原来的ref对象
+toRef(() => props.foo)：只能读，不能修改
+toRef(1)：等同于 ref(1)
+const fooRef = toRef(state, 'foo') ：// 双向 ref，会与源属性同步
+toref返回的类型为ObjectRefImpl
+
+defineProps的返回值是一个proxy，所以有时候需要使用toRefs(props)之后再解构。
+可以对props使用toRef()，但是对props 做出更改的限制依然有效。
+
+toValue()：与 unref() 类似，不同的是此函数也会规范化 getter 函数。如果参数是一个 getter，它将会被调用并且返回它的返回值。
+
+toRefs()：循环【一个响应式对象】的属性，然后对每个属性使用toRef()。当需要解构但不丢失响应式的时候，需要使用toRefs：
+1、对props使用toRefs然后解构。
+2、当从组合式函数中返回响应式对象时：
+function useFeatureX() {
+  const state = reactive({
+    foo: 1,
+    bar: 2
+  })
+  // 在返回时都转为 ref
+  return toRefs(state)
+}
+const { foo, bar } = useFeatureX() // 可以解构而不会失去响应性
+
+isProxy():检查一个对象是否是由 reactive()、readonly()、shallowReactive() 或 shallowReadonly() 创建的代理
+
+isReactive():检查一个对象是否是由 reactive() 或 shallowReactive() 创建的代理。
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 在一个 Vue3 单文件组件 (SFC)中，<script setup> 和 <script> 它们各自最多只能存在一个
 <script setup> 这个脚本块将被预处理为组件的 setup() 函数，这意味着它将为每一个(也可以说每一次)组件实例都执行。
 <script> 只在组件被首次引入的时候执行一次，其它地方引入或再次实例化都不会再执行。
@@ -80,6 +172,15 @@ computed是参数为一个函数或者一个get、set对象
          set(newValue) {}
         })
         调用set时，需要使用.value：fullName.value = ''
+调试computed：
+===>const plusOne = computed(() => count.value + 1, {
+       onTrack(e) {
+           debugger
+         },
+         onTrigger(e) {
+           debugger
+         }
+       })
 
 
 当调用 onMounted 时，Vue 会自动将回调函数注册到【当前正被初始化的】组件实例上
@@ -158,6 +259,14 @@ defineProps 是一个仅 <script setup> 中可用的编译宏命令，并不需�
 
 defineEmits 仅可用于 <script setup> 之中，并且不需要导入，它返回一个等同于 $emit 方法的 emit 函数。
 emit校验无论返回true或者false，父组件都会监听到
+emit校验：
+===><script setup>
+      const emit = defineEmits({
+        submit(payload: { email: string, password: string }) {
+          // 通过返回值为 `true` 还是为 `false` 来判断验证是否通过
+        }
+      })
+      </script>
 
 defineModel主要用于父子组件之间。
 defineModel在子组件中声明，在父组件中绑定、传值。
