@@ -88,6 +88,70 @@ const { foo, bar } = useFeatureX() // 可以解构而不会失去响应性
 isProxy():检查一个对象是否是由 reactive()、readonly()、shallowReactive() 或 shallowReadonly() 创建的代理
 
 isReactive():检查一个对象是否是由 reactive() 或 shallowReactive() 创建的代理。
+
+shallowRef()：只有对 .value 的访问是响应式的，即只有更改.value的值时才会触发响应式（一般用于ref的参数为对象类型时）：
+const state = shallowRef({ count: 1 })
+// 不会触发更改
+state.value.count = 2
+// 会触发更改
+state.value = { count: 2 }
+
+
+triggerRef()：参数为一个shallowRef，triggerRef()经常是配合shallowRef()使用的，当shallowRef()的参数为一个对象时，对该对象的属性进行更改时不会触发响应式，这时需要使用triggerRef()。有点类似$set()的功能：
+const shallow = shallowRef({
+  greet: 'Hello, world'
+})
+// 触发该副作用第一次应该会打印 "Hello, world"
+watchEffect(() => {
+  console.log(shallow.value.greet)
+})
+// 这次变更不应触发副作用，因为这个 ref 是浅层的
+shallow.value.greet = 'Hello, universe'
+// 打印 "Hello, universe"
+triggerRef(shallow)
+
+customRef()：
+
+onErrorCaptured()：注册一个钩子，在捕获了后代组件传递的错误时调用。
+错误可以从以下几个来源中捕获：
+1、组件渲染
+2、事件处理器
+3、生命周期钩子
+4、setup() 函数
+5、侦听器
+6、自定义指令钩子
+7、过渡钩子
+这个钩子带有三个实参：错误对象、触发该错误的组件实例，以及一个说明错误来源类型的信息字符串。
+onErrorCaptured()可以捕获所有子组件的错误和当前组件的错误。如果子组件中也声明了onErrorCaptured()并且返回了false，则不能捕获拦截的错误。
+errorCaptured()中可以抛出错误，也可以更改组件状态，但不能因为改变组件状态再次导致渲染错误，否则会死循环。
+默认情况下，所有的错误都会被发送到应用级的 app.config.errorHandler (前提是这个函数已经定义)，这样这些错误都能在一个统一的地方报告给分析服务。
+
+onRenderTracked() :当组件渲染过程中追踪到响应式依赖时调用，这个钩子仅在开发模式下可用
+onRenderTriggered() ：当响应式依赖的变更触发了组件渲染时调用，这个钩子仅在开发模式下可用
+
+provide()：provide() 必须在组件的 setup() 阶段同步调用。
+inject()：inject() 必须在组件的 setup() 阶段同步调用。
+
+extends选项：
+同 mixins 一样，所有选项 (setup() 除外) 都将使用相关的策略进行合并。
+extends不建议用于组合式 API，extends 是为选项式 API 设计的，不会处理 setup() 钩子的合并。
+如果你仍然想要通过组合式 API 来“继承”一个组件，可以在继承组件的 setup() 中调用基类组件的 setup()：
+import Base from './Base.js'
+export default {
+  extends: Base,
+  setup(props, ctx) {
+    return {
+      ...Base.setup(props, ctx),
+      // 本地绑定
+    }
+  }
+}
+extends总结：
+1、A extends B，即便A组件中没有template，也不会继承B组件中的template。
+2、extends不会继承setup
+3、extends相关业务最好使用选项式
+4、如果要被继承的组件是setup模式，需要使用 extends: Base, ...Base.setup(props, ctx)。但是这样依然无法继承要被继承的组件的模板内容。
+
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 在一个 Vue3 单文件组件 (SFC)中，<script setup> 和 <script> 它们各自最多只能存在一个
