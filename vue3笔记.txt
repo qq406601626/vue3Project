@@ -152,6 +152,37 @@ extends总结：
 3、extends相关业务最好使用选项式
 4、如果要被继承的组件是setup模式，需要使用 extends: Base, ...Base.setup(props, ctx)。但是这样依然无法继承要被继承的组件的模板内容。
 
+在template下嵌套template，需要给嵌套的template加上v-if="true"
+
+可以对顶层的template和script、style使用src属性：
+<template src="./template.html"></template> // 在src的模板中依然可以绑定.vue文件中的变量
+<style src="./style.css"></style>
+<script src="./script.js"></script>
+你也可以从 npm 依赖中导入资源：
+<style src="todomvc-app-css/index.css" />
+
+mergeProps()：mergeProps() 支持以下特定 props 参数的处理，将它们合并成一个对象。
+class
+style
+onXxx 事件监听器——多个同名的事件监听器将被合并到一个数组
+示例：
+import { mergeProps } from 'vue'
+const one = {
+  class: 'foo',
+  onClick: handlerA
+}
+const two = {
+  class: { bar: true },
+  onClick: handlerB
+}
+const merged = mergeProps(one, two)
+/**
+ {
+   class: 'foo bar',
+   onClick: [handlerA, handlerB]
+ }
+ */
+
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 在一个 Vue3 单文件组件 (SFC)中，<script setup> 和 <script> 它们各自最多只能存在一个
