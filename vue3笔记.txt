@@ -270,6 +270,18 @@ SSR： {boolean} 应用是否运行在 server 上
 只有以 VITE_ 为前缀的变量才会暴露给经过 vite 处理的代码：
 VITE_SOME_KEY=123
 console.log(import.meta.env.VITE_SOME_KEY) // "123"
+
+在onMounted中声明onUnmounted也会执行。
+但是外层的onUnmounted会先执行：aaaaaaa=>bbbbbbbbbbbbb=>ccccccccccccc
+onMounted(()=>{
+  console.log('aaaaaaa')
+  onUnmounted(()=>{
+    console.log('ccccccccccccc')
+  })
+})
+onUnmounted(()=>{
+  console.log('bbbbbbbbbbbbbb')
+})
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 在一个 Vue3 单文件组件 (SFC)中，<script setup> 和 <script> 它们各自最多只能存在一个
