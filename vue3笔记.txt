@@ -200,6 +200,76 @@ changeTestName(testName)
 
 vue 中的 getCurrentInstance 方法返回了 ctx 和 proxy，控制台打印 ctx 和 proxy 发现和 vue2.x 中的 this 等同，习惯使用 this 的朋友可以用 proxy 进行替代。
 
+
+1、SFC中的setup中的ctx的prototype是普通script中的this
+2、在 <script setup> 中创建的变量不会作为属性添加到组件实例中，这使得它们无法从选项式 API 中访问。
+3、选项式中的render现在无效。如果要动态生成模板，只能使用选项式API然后返回模板Vnode
+
+
+选项式API：
+ setup(props, { attrs, slots, emit, expose }) {  // ctx:{attrs, slots, emit, expose}
+
+ }
+ 和props不同，attrs和slots的属性都不是响应式的（即不能监听，但在模板中引用时却可以自动变化）。避免解构它们，并始终通过 attrs.x 或 slots.x 的形式使用其中的属性
+
+cssModule:
+cssModule是针对css语法的，对于嵌套的写法，可以不用声明scss。使用时需要使用如下方法：
+<style module="test" >
+.container{
+  background: blue;
+  padding: 20px;
+  .a {
+    background: gray;
+  }
+}
+#container{
+  background: pink;
+}
+</style>
+<template>
+  <div :class="test.container">
+    <span :class="test.a">aaaaaa</span>
+  </div>
+  <div :id="test.container">qqqqqqq</div>
+</template>
+
+
+<template>
+  <p :class="$style.red">This should be red</p> // 没有命名空间时，使用$style
+</template>
+<template>
+  <p :class="classes.red">red</p> // 有命名空间时，直接使用命名空间名称
+</template>
+或者
+import { useCssModule } from 'vue'
+useCssModule()
+// 具名情况下, 返回 <style module="classes"> 的 class
+useCssModule('classes')
+
+<style module="classes">
+.red {
+  color: red;
+}
+</style>
+
+使用环境变量：它必须按 import.meta.env.BASE_URL 的原样出现（例如 import.meta.env['BASE_URL'] 是无效的）
+使用：import.meta.env.BASE_URL
+
+创建环境变量文件：
+.env                # 所有情况下都会加载
+.env.local          # 所有情况下都会加载，但会被 git 忽略
+.env.[mode]         # 只在指定模式下加载
+.env.[mode].local   # 只在指定模式下加载，但会被 git 忽略
+注意mode是development或者production，而不是dev或者pro。
+自带的一些变量：
+MODE： {string} 应用运行的模式。
+BASE_URL： {string} 部署应用时的基本 URL。他由base 配置项决定。
+PROD： {boolean} 应用是否运行在生产环境（使用 NODE_ENV='production' 运行开发服务器或构建应用时使用 NODE_ENV='production' ）。
+DEV： {boolean} 应用是否运行在开发环境
+SSR： {boolean} 应用是否运行在 server 上
+只有以 VITE_ 为前缀的变量才会暴露给经过 vite 处理的代码：
+VITE_SOME_KEY=123
+console.log(import.meta.env.VITE_SOME_KEY) // "123"
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 在一个 Vue3 单文件组件 (SFC)中，<script setup> 和 <script> 它们各自最多只能存在一个
