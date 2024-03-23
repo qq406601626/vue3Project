@@ -270,6 +270,11 @@ SSR： {boolean} 应用是否运行在 server 上
 只有以 VITE_ 为前缀的变量才会暴露给经过 vite 处理的代码：
 VITE_SOME_KEY=123
 console.log(import.meta.env.VITE_SOME_KEY) // "123"
+如果想要在环境变量中使用 $ 符号，则必须使用 \ 对其进行转义。
+在html模板中使用变量，不用带import.meta.env（注意：只能在.html文件中使用，vue组件中无效）：
+Vite 还支持在 HTML 文件中替换环境变量。import.meta.env 中的任何属性都可以通过特殊的 %ENV_NAME% 语法在 HTML 文件中使用：
+<h1>Vite is running in %MODE%</h1>
+<p>Using data from %VITE_API_URL%</p>
 
 在onMounted中声明onUnmounted也会执行。
 但是外层的onUnmounted会先执行：aaaaaaa=>bbbbbbbbbbbbb=>ccccccccccccc
@@ -282,6 +287,42 @@ onMounted(()=>{
 onUnmounted(()=>{
   console.log('bbbbbbbbbbbbbb')
 })
+
+根据不同开发环境设置不同的vite config：
+export default defineConfig(async ({ command, mode, isSsrBuild, isPreview }) => { // 支持async
+  if (command === 'serve') {
+    return {
+      // dev 独有配置
+    }
+  } else {
+    // command === 'build'
+    return {
+      // build 独有配置
+    }
+  }
+})
+// dev开发环境command的值为serve
+
+
+在配置中使用环境变量：
+环境变量通常可以从 process.env 获得。
+
+注意 Vite 默认是不加载 .env 文件的，因为这些文件需要在执行完 Vite 配置后才能确定加载哪一个，举个例子，root 和 envDir 选项会影响加载行为。
+不过当你的确需要时，你可以使用 Vite 导出的 loadEnv 函数来加载指定的 .env 文件。
+import { defineConfig, loadEnv } from 'vite'
+export default defineConfig(({ command, mode }) => {
+  // 根据当前工作目录中的 `mode` 加载 .env 文件
+  // 设置第三个参数为 '' 来加载所有环境变量，而不管是否有 `VITE_` 前缀。
+  const env = loadEnv(mode, process.cwd(), '')
+  return {
+    // vite 配置
+    define: {
+      __APP_ENV__: JSON.stringify(env.APP_ENV),
+    },
+  }
+})
+
+
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 在一个 Vue3 单文件组件 (SFC)中，<script setup> 和 <script> 它们各自最多只能存在一个
