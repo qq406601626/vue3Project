@@ -324,7 +324,7 @@ export default defineConfig(({ command, mode }) => {
 
 静态资源：
 单独一个文件：
-使用new URL('@/assets/img/service/advantage/process/icon-1.png',import.meta.url)
+使用new URL('@/assets/img/service/advantage/process/icon-1.png',import.meta.url).href
 该方式第一个参数可以是相对路径，也可以是路径别名。
 该方式只是会获得一个完整的资源url，当模板中引用该路径时，会把该资源打包。有点类似于模板中的require()方式引入资源。
 
