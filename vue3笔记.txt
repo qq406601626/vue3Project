@@ -1,3 +1,21 @@
+// 在写hooks时需要注意的规范：
+// 1、如果返回reactive，解构会失去响应式。
+// 2、如果返回toRefs，那么每个属性都需要结构才能用，如果变量多了则不好维护。
+// 所以应该返回toRefs,如果返回的属性多了，可以在外层使用reactive，这样里层的ref会自动解包。
+// 例如：返回的对象里每个属性都是ref（类似于toRefs）
+// 1、使用解构方式：
+// "x" and "y" are refs
+// const { x, y } = useMouse()
+// console.log(x.value)
+// const mouse = useMouse()
+// console.log(mouse.x.value)
+// 2、使用对象方式
+// import { reactive } from 'vue'
+// const mouse = reactive(useMouse())
+// "x" and "y" will be auto unwrapped, no `.value` needed
+// console.log(mouse.x)
+
+
 ref返回的是一个RefImpl类型，内层的非原始值将通过 reactive() 转换为响应式代理。ref.value返回的是一个proxy。
 reactive返回的是一个Proxy类型。
 reactive() 将深层地转换对象：当访问嵌套对象时，它们也会被 reactive() 包装。即访问reactive对象的属性时，会返回proxy。（并非时在声明时做的，而是在访问时做的proxy处理）
