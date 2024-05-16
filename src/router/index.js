@@ -8,20 +8,20 @@ const router = createRouter({
       children:[
         {
           path: '',
-          name: 'Home',
+          name: 'Dashboard',
           component: Dashboard,
           children:[
             {
               path:'',
+              name:'home',
+              component:()=>import('@/views/index/index.vue')
+            },
+            {
+              path:'test',
               name:'test',
               component:()=>import('@/views/test/index.vue')
             }
           ]
-        },
-        {
-          path: 'login',
-          name: 'login',
-          component:()=>import('@/views/login/index.vue'),
         },
       ]
     },

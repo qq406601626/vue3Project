@@ -1,11 +1,11 @@
 <script setup>
-console.log(import.meta.env.VITE_SOME_KEY)
+
 </script>
+
 <template>
-  <h1>Vite is running in %MODE%</h1>
+  <div style="color:#000;">this is index page</div>
 </template>
 
 <style scoped lang="scss">
 
 </style>
-
