@@ -1,10 +1,8 @@
 <script setup>
-import {onMounted} from 'vue'
-onMounted(async ()=>{
-  fetch('/api/user/test').then(res=>{
-    console.log('res',res)
-  })
-})
+
+
+
+
 </script>
 
 <template>
