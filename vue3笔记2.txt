@@ -2,3 +2,10 @@
 2、为ref对象添加reactive属性：只需像使用普通对象一样访问属性值即可，
 3、为ref对象添加ref属性：ref对象会正常的被添加到ref对象中，如果打印该对象，添加的ref对象会显示为RefImpl。只是在取值时，ref的get会根据要读取的属性的值是否是ref来判断是否自动解包。即，如果ref对象下有ref属性时，使用时无需关心属性是否是ref，只需像使用普通对象一样访问属性值即可，
 总结：不论是把ref添加到reactive还是把reactive添加到ref或者把ref添加到ref中，都不用关心深层属性是否是ref或者reactive，使用时只需正常访问对象的属性即可（因为ref和reactive的get属性会自动解包）。
+
+
+4、如果ref或者reactive中的某个属性是ref集合，那么在访问该集合中的元素时，不会自动解包。eg：const obj = ref/reactive({name:'zhangsan',list:[ref(1),ref(2)]}),放访问obj.list[0]时，不会自动解包，需要使用obj.list[0].value。（因为ref/reactive的get属性只会返回对象的proxy，不会对数组中的每个元素都进行proxy）。
+
+5、reactive的任何深层属性改变时都会触发模板渲染，但是对reactive对象重新赋值时(比如reactiveObj = {})，不会触发模板渲染。
+
+6、shallowReactive只有根级属性变化时才会触发模板渲染。所以如果深层对象中有ref对象时，ref不会自动解包。同样，shallowReactive对象重新赋值时(比如shallowReactiveObj = {})，也不会触发模板渲染。
