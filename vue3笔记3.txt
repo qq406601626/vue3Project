@@ -1,0 +1,40 @@
+vue的组件可以是一个函数，即函数式组件：
+
+函数式组件：
+Component类型：
+Component:ConcreteComponent | ComponentPublicInstanceConstructor。
+ConcreteComponent:ComponentOptions | FunctionalComponent。
+
+function MyComponent(props, { slots, emit, attrs }) {
+  // ...
+}
+
+MyComponent.props = ['value']
+MyComponent.emits = ['click']
+
+eg：
+
+function FComponent(
+  props: FComponentProps,
+  context: SetupContext<Events>
+) {
+  return (
+  jsx:
+    <button onClick={() => context.emit('sendMessage', props.message)}>
+        {props.message} {' '}
+    </button>
+  或者:
+    h('button',props.message)
+  )
+}
+
+FComponent.props = {
+  message: {
+    type: String,
+    required: true
+  }
+}
+
+FComponent.emits = {
+  sendMessage: (value: unknown) => typeof value === 'string'
+}
