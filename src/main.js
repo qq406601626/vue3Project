@@ -6,6 +6,9 @@ import router from './router'
 import 'element-plus/dist/index.css'
 import './assets/main.css'
 const app = createApp(App)
+app.provide('pageRoot',{
+    name:'zhangsan'
+})
 app.use(createPinia())
 app.use(router)
 app.use(ElementPlus)
